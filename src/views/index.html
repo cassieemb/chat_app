@@ -33,14 +33,14 @@
 						</div>
 						<div class="form-row">
 							<label class="form-row-inner">
-								<input type="text" name="phone_number" id="phone_number" class="input-text" required>
+								<input type="text" name="phone_number" id="phone_number" class="input-text" pattern="^\d{10}$" placeholder="Phone Number Format: xxxyyyzzzz"required>
 								<span class="label">Phone Number</span>
 		  						<span class="border"></span>
 							</label>
 						</div>
 						<div class="form-row">
 							<label class="form-row-inner">
-								<input type="password" name="password" id="password" class="input-text" required>
+								<input type="password" name="password" id="password" class="input-text" placeholder="Password Format: min 8 char w/ at least 1 special character, 1 upper case, and 1 lower case" required>
 								<span class="label">Password</span>
 								<span class="border"></span>
 							</label>
@@ -84,7 +84,7 @@
 
 	<script type="text/javascript">
 		function switchTab(evt, switchTab) {
-		    var i, tabcontent, tablinks;
+		    let i, tabcontent, tablinks;
 		    tabcontent = document.getElementsByClassName("tabcontent");
 		    for (i = 0; i < tabcontent.length; i++) {
 		        tabcontent[i].style.display = "none";
@@ -102,11 +102,46 @@
 	<script>
 		// Form validation
 		function validate() {
-			if( document.form.password.value !== document.form.confirm_password.value ) {
-				alert( "Passwords do not match." );
-				document.form.password.focus() ;
+
+			function containsSpecialCharacters(str){
+				let regex = /[ !@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g;
+				return regex.test(str);
+			}
+
+			function containsLowerAndUpper(str){
+				let regex = /[A-Za-z]/g;
+				return regex.test(str);
+			}
+
+			// check that password has minimum length of 8 characters
+			if(document.form.password.value.length < 8) {
+				alert("Your password must have at least 8 characters.");
+				document.form.password.focus();
 				return false;
 			}
+
+			// check that password has at least one upper case and one lower case letter
+			if(!containsLowerAndUpper(document.form.password.value)) {
+				alert("Your password must have at least upper case letter and one lower case letter.");
+				document.form.password.focus();
+				return false;
+			}
+
+			// check that password has at least 1 special character
+			if(!containsSpecialCharacters(document.form.password.value)) {
+				alert("Your password must have at least 1 special character.");
+				document.form.password.focus();
+				return false;
+			}
+
+			// check that two passwords match
+			if( document.form.password.value !== document.form.confirm_password.value ) {
+				alert("Passwords do not match.");
+				document.form.password.focus();
+				return false;
+			}
+
+			// submit form if all conditions validate
 			return true;
 		}
 	</script>
