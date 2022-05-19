@@ -6,10 +6,16 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const request = require('request');
 
-// authentication variables
+// authentication variables from .env file
 const spaceDomain = process.env.SPACE_URL;
 const username= process.env.PROJECT_ID;
 const password= process.env.API_KEY
+
+// path to data from .env file
+const pathToUsers = process.env.PATH_TO_USERS;
+const pathToChannels = process.env.PATH_TO_CHANNELS;
+const pathToBackupUsers = process.env.PATH_TO_BACKUP_USERS;
+const pathToBackupChannels = process.env.PATH_TO_BACKUP_CHANNELS;
 
 const app = express();
 app.use(bodyParser.urlencoded({extended : true}));
@@ -19,12 +25,11 @@ app.use(express.static(__dirname + "/views"));
 
 // define function to add new user object
 function addUser(memberID, chatToken, phoneNumber, password, approvedChannels){
-    console.log(memberID, chatToken, phoneNumber, password, approvedChannels)
     // Storing the JSON format data in userObject
-    let userObject = JSON.parse(fs.readFileSync("src/data/users.json", 'utf-8'));
+    let userObject = JSON.parse(fs.readFileSync(pathToUsers, 'utf-8'));
 
     // Backing up the most recent instance of users.json
-    fs.writeFileSync("src/data/backups/usersBackup.json",JSON.stringify(userObject));
+    fs.writeFileSync(pathToBackupUsers,JSON.stringify(userObject));
 
     // Defining new data to be added
     let newUser = {
@@ -39,7 +44,7 @@ function addUser(memberID, chatToken, phoneNumber, password, approvedChannels){
     userObject[newUser.memberID] = newUser
 
     // Writing to our JSON file
-    fs.writeFile("src/data/users.json", JSON.stringify(userObject), (err) => {
+    fs.writeFile(pathToUsers, JSON.stringify(userObject), (err) => {
         if (err)
             console.log(err);
         console.log(memberID + " added");
@@ -49,11 +54,11 @@ function addUser(memberID, chatToken, phoneNumber, password, approvedChannels){
 // handles updating channel objects
 function channelsUpdate(channelList, memid){
 
-    // Reads channels.json
-    const jsonData = fs.readFileSync("src/data/channels.json", "utf8");
+    // Read in channels.json
+    const jsonData = fs.readFileSync(pathToChannels, "utf8");
 
     // Creates a backup instance to /backups/chBackup.json
-    fs.writeFileSync("src/data/backups/chBackup.json",jsonData);
+    fs.writeFileSync(pathToBackupChannels,jsonData);
     let channels = JSON.parse(jsonData) 
 
     // loops over channels passed
@@ -65,9 +70,9 @@ function channelsUpdate(channelList, memid){
                 channels[channel].members.push(memid)
               }
           }
-          // if the channel isnt in channels.json, assume its a new channel and add it to the file with creation timestamp
+          // if the channel isn't in channels.json, assume it's a new channel and add it to the file with creation timestamp
           else {
-            today = new Date().toLocaleDateString()
+            let today = new Date().toLocaleDateString()
             channels[channel] = 
             {
                   "members":[memid],
@@ -77,7 +82,7 @@ function channelsUpdate(channelList, memid){
         }
 
         // write to data/channels.json
-        fs.writeFileSync("src/data/channels.json",JSON.stringify(channels))   
+        fs.writeFileSync(pathToChannels,JSON.stringify(channels))
     }
 }
 
@@ -104,6 +109,60 @@ function createToken(memberID){
     return token
 }
 
+// use phone number to lookup user ID from phone number
+function lookupUser(submittedTN){
+    // read users.json into users
+    let userObject = JSON.parse(fs.readFileSync(pathToUsers, 'utf-8'));
+    const users = Object.values(userObject).map(value => {
+        let memberID = value['memberID']
+        let memberPass = value['password']
+        let phoneNumber= value['phoneNumber']
+        return [memberID, memberPass, phoneNumber]
+    });
+
+    // loop through users array to find a user with matching phone number
+    for (let i = 0; i < users.length; i++) {
+        let userNumber = users[i][2];
+        let userID = users[i][0];
+
+        // if phone number match is found, return user ID
+        if (userNumber === '' + submittedTN) {
+            return userID
+        }
+    }
+    return false
+}
+
+// validate login from user object
+function validateLogin(submittedTn, submittedPass){
+    // read in users.json
+    let userObject = JSON.parse(fs.readFileSync(pathToUsers, 'utf-8'));
+
+    // store user ID or 'false' in user var
+    let user = lookupUser(submittedTn)
+
+    // check if user exists
+    if (user !== false){
+        console.log('user found')
+
+        // if phone number and password match, return 'login validated'
+        let userPass = userObject[user]['password']
+        if (userPass === submittedPass) {
+            console.log("Login Validated")
+            return true;
+        }
+        // if phone number and password don't match, return 'invalid password'
+        else {
+            console.log('Invalid password and username combination, please try again')
+            return false
+        }
+    }
+    else {
+        console.log('There is no registered user with that phone number.')
+    }
+}
+console.log(validateLogin('1234567890','abcd'))
+
 // sign up or sign in page
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, 'views/index.html'))
@@ -129,7 +188,15 @@ app.post("/sign_up", async (req, res) => {
 });
 
 // sign in should validate password and user ID and if correct, redirect to 'home' view which should show current channels in a sidebar and user modification options
+app.post( "/sign_in", async(req, es) =>{
+    // receive credentials from login
 
+    // check to find a matching user object and validate that the password is correct
+
+    // show wrong password error and reset sign in page if validation fails
+
+    // redirect to home  page if validation is successful
+});
 
 async function start(port) {
     app.listen(port, () => {
