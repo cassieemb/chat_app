@@ -146,10 +146,13 @@ function validateLogin(submittedTn, submittedPass){
 
     // check if user exists
     if (user !== false){
+        console.log('user found')
+
 
         // if phone number and password match, return 'login validated'
         let userPass = userObject[user]['password']
         if (userPass === submittedPass) {
+
             return 'Login Validated'
         }
         // if phone number and password don't match, return 'invalid password'
@@ -185,6 +188,7 @@ app.post("/sign_up", async (req, res) => {
 
     // after user registration, redirect to 'home' view which should show current channels in a sidebar and user modification options
 });
+
 
 // sign in should validate password and user ID and if correct, redirect to 'home' view
 app.post( "/sign_in", async(req, res) =>{
