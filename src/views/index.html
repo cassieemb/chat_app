@@ -11,6 +11,11 @@
 </head>
 
 <body class="form-v8">
+
+	<div id = "error-banner" class="error-banner-hidden" >
+		<h1 id = "error-message" style="text-align: center;"></h1>
+	</div>
+
 	<div class="page-content">
 		<div class="form-v8-content">
 			<div class="form-right">
@@ -19,7 +24,7 @@
 						<button class="tablinks" onclick="switchTab(event, 'sign-up')" id="defaultOpen">Sign Up</button>
 					</div>
 					<div class="tab-inner">
-						<button class="tablinks" onclick="switchTab(event, 'sign-in')">Sign In</button>
+						<button class="tablinks" onclick="switchTab(event, 'sign-in')" id="openIfFail">Sign In</button>
 					</div>
 				</div>
 				<form class="form-detail" name="form" onsubmit = "return(validate());">
@@ -33,7 +38,7 @@
 						</div>
 						<div class="form-row">
 							<label class="form-row-inner">
-								<input type="text" name="phone_number" id="phone_number" class="input-text" pattern="^\d{10}$" placeholder="Phone Number Format: xxxyyyzzzz"required>
+								<input type="text" name="phone_number" id="phone_number" class="input-text" pattern="^\d{10}$" placeholder="Phone Number Format: xxxyyyzzzz" required>
 								<span class="label">Phone Number</span>
 		  						<span class="border"></span>
 							</label>
@@ -53,15 +58,15 @@
 							</label>
 						</div>
 						<div class="form-row-last" >
-							<input formaction="/sign_up" formmethod="post" type="submit" name="register" class="register" value="Register" onclick="createUser()">
+							<input formaction="/sign_up" formmethod="post" type="submit" name="register" class="register" value="Register">
 						</div>
 					</div>
 				</form>
-				<form class="form-detail" action="#" method="post">
+				<form class="form-detail">
 					<div class="tabcontent" id="sign-in">
 						<div class="form-row">
 							<label class="form-row-inner">
-								<input type="text" name="phone_number_login" id="phone_number_login" class="input-text" required>
+								<input type="text" name="phone_number_login" id="phone_number_login" class="input-text" pattern="^\d{10}$" placeholder="Phone Number Format: xxxyyyzzzz" required>
 								<span class="label">Phone Number</span>
 		  						<span class="border"></span>
 							</label>
@@ -74,7 +79,7 @@
 							</label>
 						</div>
 						<div class="form-row-last">
-							<input type="submit" name="register" class="register" value="Sign In">
+							<input formaction="/sign_in" formmethod="post" type="submit" name="register" class="register" value="Sign In">
 						</div>
 					</div>
 				</form>
@@ -99,7 +104,7 @@
 		// Get the element with id="defaultOpen" and click on it
 		document.getElementById("defaultOpen").click();
 	</script>
-	<script>
+	<script type="text/javascript">
 		// Form validation
 		function validate() {
 
@@ -145,5 +150,40 @@
 			return true;
 		}
 	</script>
+	<script type="text/javascript">
+		window.addEventListener('load',
+				function() {
+					// check for search params
+					let errMess = '<%= errM %>';
+					let setClass = '<%= setClass %>';
+					let fail = '<%= fail %>';
+					console.log(fail)
+
+					// click sign in tab if this is a reattempt at logging in
+					if (fail === 'true'){
+						document.getElementById("openIfFail").click();
+					}
+
+					// if setClass is equal to 'activate'
+					if (setClass === 'activate') {
+						// get error banner and error message elements
+						const errorBanner = document.getElementById("error-banner");
+						const errorMessage = document.getElementById("error-message");
+
+						// set contents of error message and change banner to active class
+						errorMessage.textContent = errMess
+						errorBanner.className = '' + errorBanner
+
+						// set timeout and at end of timeout, change banner to hidden class and reset error message contents
+						setTimeout(function(){
+							errorMessage.textContent = '';
+							errorBanner.className = 'error-banner-hidden'
+						}, 10000)
+					}
+
+				},
+				false);
+	</script>
+
 </body>
 </html>

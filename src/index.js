@@ -18,10 +18,13 @@ const pathToBackupUsers = process.env.PATH_TO_BACKUP_USERS;
 const pathToBackupChannels = process.env.PATH_TO_BACKUP_CHANNELS;
 
 const app = express();
+
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static(__dirname + "/views"));
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
 
 // define function to add new user object
 function addUser(memberID, chatToken, phoneNumber, password, approvedChannels){
@@ -143,25 +146,21 @@ function validateLogin(submittedTn, submittedPass){
 
     // check if user exists
     if (user !== false){
-        console.log('user found')
 
         // if phone number and password match, return 'login validated'
         let userPass = userObject[user]['password']
         if (userPass === submittedPass) {
-            console.log("Login Validated")
-            return true;
+            return 'Login Validated'
         }
         // if phone number and password don't match, return 'invalid password'
         else {
-            console.log('Invalid password and username combination, please try again')
-            return false
+            return 'Invalid password and username combination, please try again'
         }
     }
     else {
-        console.log('There is no registered user with that phone number.')
+        return 'There is no registered user with that phone number.'
     }
 }
-console.log(validateLogin('1234567890','abcd'))
 
 // sign up or sign in page
 app.get("/", (req, res) => {
@@ -187,15 +186,31 @@ app.post("/sign_up", async (req, res) => {
     // after user registration, redirect to 'home' view which should show current channels in a sidebar and user modification options
 });
 
-// sign in should validate password and user ID and if correct, redirect to 'home' view which should show current channels in a sidebar and user modification options
-app.post( "/sign_in", async(req, es) =>{
-    // receive credentials from login
+// sign in should validate password and user ID and if correct, redirect to 'home' view
+app.post( "/sign_in", async(req, res) =>{
+    // receive credentials from login attempt
+    const phone_number_attempt  = req.body['phone_number_login'];
+    const password_attempt = req.body['password_1'];
 
     // check to find a matching user object and validate that the password is correct
+    let attemptResult = validateLogin(phone_number_attempt, password_attempt)
+    console.log(attemptResult)
 
-    // show wrong password error and reset sign in page if validation fails
+    // redirect to home page if validation is successful, need to maybe pass userID also?
+    if (attemptResult === 'Login Validated') {
+        // res.sendFile(path.join(__dirname, 'views/home.html'))
+    }
 
-    // redirect to home  page if validation is successful
+    // reset sign in page if validation fails
+    else {
+        // redirect back to sign in page and flash error message
+        res.render(path.join(__dirname, 'views/index.html'),
+            {setClass: 'activate',
+                errM: attemptResult,
+            fail: true},
+        );
+    }
+
 });
 
 async function start(port) {
