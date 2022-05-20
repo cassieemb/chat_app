@@ -43,8 +43,8 @@ We are building a browser based chat application that imitates the multi channel
 
 ## JS
 - [x] on click for sign up, send information to server app, create a token, and create a user object 
-- [ ] add regex validation for password and phone number in sign up page 
-- [ ] on click for sign in, send user ID and password to server app for password validation
+- [x] add regex validation for password and phone number in sign up page 
+- [x] on click for sign in, send user ID and password to server app for password validation
 - [ ] after sign up is successful or password validation is successful, redirect to home page by using route to find allowed channels 
 - [ ] on click of other channel, should reload home page with the new 'current' channel 
  
