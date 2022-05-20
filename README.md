@@ -10,7 +10,7 @@ We are building a browser based chat application that imitates the multi channel
 
 ### Methods 
 - [x] write a function to create a token 
-- [ ] write a function to validate the user id and password from the user object 
+- [x] write a function to validate the user id and password from the user object 
 - [ ] write a function to check the user object for allowed channels 
 - [ ] write an update token function to "update" (create a new token) with all the previous values as well as the changed value and update user object with new token and a route to handle this functionality when clicked in browser 
 - [ ] write a function to look up channels json object and return channel name/id with matching phone number when a inbound message is recieved
@@ -21,7 +21,11 @@ We are building a browser based chat application that imitates the multi channel
 
 ### Routes 
 - [x] handle signup info by creating token and user object and redirect to home page route
-- [ ] validate login when login screen is submitted and redirect to home page route if valid 
+- [] add logic to reject user registration if matching phone number or username is found
+- [x] validate login when login screen is submitted
+- [] if login is valid, redirect to home page (just needs to be uncommented when home.html exists)
+- [x] if login is invalid, show error and return to sign in page
+- [] add login counter? i.e. after 3 attempts, ban user from trying again for x amount of time 
 - [ ] handle home page route by calling function to get a user's allowed channels and passing it to front end via express 
 - [ ] handle updating token and user object (changing member ID, phone number, or allowed channels) by calling update token route and reloading the page with the relevant new information 
 - [ ] write route to handle inbound sms by using channel phone number lookup function to find the correct channel ID associated with the number that received the message and the correct user whose phone number in the user object matches the from number 
@@ -31,7 +35,7 @@ We are building a browser based chat application that imitates the multi channel
 ## Client Side To Do's 
 
 ## Views
-- [x] create a sign up form page 
+- [x] create a sign-up form page 
 - [x] create log in page 
 - [ ] create home page showing all channels in side nav and current channel in main page (buttons to send message, leave channel, add someone to channel, view all members in a channel) 
 - [ ] create user settings page with ability to change member ID, phone number, and allowed channels (anything else we want?)
