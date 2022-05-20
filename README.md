@@ -30,7 +30,7 @@ We are building a browser based chat application that imitates the multi channel
 - [ ] handle updating token and user object (changing member ID, phone number, or allowed channels) by calling update token route and reloading the page with the relevant new information 
 - [X] write route to handle inbound sms by using channel phone number lookup function to find the correct channel ID associated with the number that received the message and the correct user whose phone number in the user object matches the from number 
 - [x] write a route to handle receiving form data and using it with the create new channel function to add a new channel (maybe optional parameter to specify users who should be added like slack has it?)
-- [ ] write a route to handle adding user, removing users, and show all users 
+- [x] write a route to handle adding user, removing users, and show all users 
 
 ## Client Side To Do's 
 
