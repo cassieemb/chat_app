@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Sign Up or Sign In</title>
+
+	<!-- Mobile Specific Metas -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!-- Main Style Css -->
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+
+    <form>
+        <div class="form-row">
+            <label class="form-row-inner">
+                <input type="text" name="memberID" id="memberID" class="input-text" required>
+                <span class="label">Member ID</span>
+                  <span class="border"></span>
+            </label>
+        </div>
+            <div class="form-row">
+                <label class="form-row-inner">
+                    <input type="text" name="channelID" id="channelID" class="channelID" required>
+                    <span class="label">Channel ID</span>
+                    <span class="border"></span>
+                </label>
+            </div>
+            <div class="form-row-last">
+                <input formaction="/chAddUser" formmethod="post" type="submit" name="AddUser" class="adduser" value="Add User">
+                <input formaction="/chPopUser" formmethod="post" type="submit" name="PopUser" class="PopUser" value="Remove User">
+                <input formaction="/chCreateChannel" formmethod="post" type="submit" name="CreateChannel" class="CreateChannel" value="Create New Channel">
+                <input formaction="/chListUsers" formmethod="post" type="submit" name="ListUsers" class="ListUsers" value="List Users">
+            </div>
+        </div>
+    </form>
+
+</body>
+</html>

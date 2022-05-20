@@ -54,38 +54,107 @@ function addUser(memberID, chatToken, phoneNumber, password, approvedChannels){
     });
 }
 
-// handles updating channel objects
-function channelsUpdate(channelList, memid){
+// Returns a list of memberIDs associated with channelID
+function chListUsers(channelID)
+{
+    // no backup as no data is written
+    const jsonData = fs.readFileSync(pathToChannels, "utf8");
+    let channels = JSON.parse(jsonData) 
 
-    // Read in channels.json
+    // make sure channelID is valid, returns even if members array is empty
+    if (channels.hasOwnProperty(channelID))
+    {
+        return channels[channelID].members;
+    }
+    else{
+        return "Invalid Channel ID"
+    }
+}
+
+// Adds user to channels[channelID].members array
+function chAddUser(channelID,memberID)
+{
     const jsonData = fs.readFileSync(pathToChannels, "utf8");
 
     // Creates a backup instance to /backups/chBackup.json
     fs.writeFileSync(pathToBackupChannels,jsonData);
     let channels = JSON.parse(jsonData) 
 
-    // loops over channels passed
-    for (const channel of channelList){
-        // if the channel exists in channels.json, add the member by member ID
-          if (channels.hasOwnProperty(channel)){
-              if (!channels[channel].members.includes(memid))
+    // ensure channelID is valid, check memberID to avoid dupes, push memberID to array
+    if (channels.hasOwnProperty(channelID))
+    {
+        if (!channels[channelID].members.includes(memberID))
               {
-                channels[channel].members.push(memid)
+                channels[channelID].members.push(memberID)
+                fs.writeFileSync(pathToChannels,JSON.stringify(channels))
+                return "Member added";
               }
-          }
-          // if the channel isn't in channels.json, assume it's a new channel and add it to the file with creation timestamp
-          else {
-            let today = new Date().toLocaleDateString()
-            channels[channel] = 
-            {
-                  "members":[memid],
-                  "phoneNumber":"",
-                  "creationDate":today
-            }
+        else{
+            return "Member already in channel";
         }
+    }
+    else{
+        return "Invalid Channel ID";
+    }
+    
+}
 
-        // write to data/channels.json
+
+// Removes user from channelID.members by memberID
+function chPopUser(channelID,memberID)
+{
+    const jsonData = fs.readFileSync(pathToChannels, "utf8");
+
+    // Creates a backup instance to /backups/chBackup.json
+    fs.writeFileSync(pathToBackupChannels,jsonData);
+    let channels = JSON.parse(jsonData) 
+
+    // make sure channelID is valid channel, memberID is in members array, retrieve and splice memberID by index
+    if (channels.hasOwnProperty(channelID))
+    {
+        if (channels[channelID].members.includes(memberID))
+              {
+                const chIndex = channels[channelID].members.indexOf(memberID);
+                if (chIndex > -1){
+                    channels[channelID].members.splice(chIndex,1)
+                }
+                fs.writeFileSync(pathToChannels,JSON.stringify(channels))
+                return "Member removed";
+              }
+        else{
+            return "Member not present";
+        }
+    }
+    else{
+        return "Invalid Channel ID";
+    }
+    
+}
+
+
+// Creates a new channel in channels.json
+function chCreateChannel(channelID,memberID)
+{
+    const jsonData = fs.readFileSync(pathToChannels, "utf8");
+
+    // Creates a backup instance to /backups/chBackup.json
+    fs.writeFileSync(pathToBackupChannels,jsonData);
+    let channels = JSON.parse(jsonData)
+    
+    // if channelID not present in channels, add channelID as a new entry with timestamp
+    if (!channels.hasOwnProperty(channelID)){
+        let today = new Date().toLocaleDateString()
+        channels[channelID] = 
+        {
+              "members":[memberID],
+              "phoneNumber":"",
+              "creationDate":today
+        }
         fs.writeFileSync(pathToChannels,JSON.stringify(channels))
+        return "channel created";
+    }
+    else{
+        return "can't overwrite existing channel";
     }
 }
 
@@ -216,6 +285,32 @@ app.post( "/sign_in", async(req, res) =>{
     }
 
 });
+
+
+// routes to expose the ability to modify channels.json
+app.post("/chAddUser",async(req,es)=>{
+    const memberID = req.body['memberID'];
+    const channelID = req.body['channelID'];
+    console.log(chAddUser(channelID,memberID));
+});
+
+app.post("/chPopUser",async(req,es)=>{
+    const memberID = req.body['memberID'];
+    const channelID = req.body['channelID'];
+    console.log(chPopUser(channelID,memberID));
+});
+
+app.post("/chListUsers",async(req,es)=>{
+    const channelID = req.body['channelID'];
+    console.log(chListUsers(channelID));
+});
+
+app.post("/chCreateChannel",async(req,es)=>{
+    const memberID = req.body['memberID'];
+    const channelID = req.body['channelID'];
+    console.log(chCreateChannel(channelID,memberID));
+});
+
 
 async function start(port) {
     app.listen(port, () => {
