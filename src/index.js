@@ -239,7 +239,7 @@ function smsToChannelName(smsToNumber, smsFromNumber, smsBody) {
     // Use smsFromNumber to determine who sent the message
     let user = lookupUser(smsFromNumber)
     // check if user exists
-    if (user !== true) {
+    if (user == false) {
         console.log('This number is not associated with a channel')
         return false
     }
@@ -283,8 +283,7 @@ app.post("/sign_up", async (req, res) => {
     addUser(member_id, token, phone_number, password, ['Welcome to SignalWire'])
 
     // add user to the default channel
-    channelsUpdate(['Welcome to SignalWire'],member_id)
-
+    chAdduser('Welcome to Signalwire',member_id)
     // after user registration, redirect to 'home' view which should show current channels in a sidebar and user modification options
 });
 
