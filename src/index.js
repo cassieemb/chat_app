@@ -54,6 +54,7 @@ function addUser(memberID, chatToken, phoneNumber, password, approvedChannels){
     });
 }
 
+// Returns a list of memberIDs associated with channelID
 function chListUsers(channelID)
 {
     // no backup as no data is written
@@ -246,13 +247,13 @@ app.post("/sign_up", async (req, res) => {
     const { member_id, phone_number, password } = req.body;
 
     // create chat token
-   // const token = createToken(member_id)
+    const token = createToken(member_id)
 
     // create user object using default channel
-    //addUser(member_id, token, phone_number, password, ['Welcome to SignalWire'])
+    addUser(member_id, token, phone_number, password, ['Welcome to SignalWire'])
 
     // add user to the default channel
-    //channelsUpdate(['Welcome to SignalWire'],member_id)
+    channelsUpdate(['Welcome to SignalWire'],member_id)
 
     // after user registration, redirect to 'home' view which should show current channels in a sidebar and user modification options
 });
