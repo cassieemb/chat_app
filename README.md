@@ -13,7 +13,7 @@ We are building a browser based chat application that imitates the multi channel
 - [x] write a function to validate the user id and password from the user object 
 - [ ] write a function to check the user object for allowed channels 
 - [ ] write an update token function to "update" (create a new token) with all the previous values as well as the changed value and update user object with new token and a route to handle this functionality when clicked in browser 
-- [ ] write a function to look up channels json object and return channel name/id with matching phone number when a inbound message is recieved
+- [X] write a function to look up channels json object and return channel name/id with matching phone number when a inbound message is recieved
 - [ ] write a function to create a new channel and add it to the channel object
 - [ ] write function to add user to channel 
 - [ ] write function to remove user from channel 
@@ -28,7 +28,7 @@ We are building a browser based chat application that imitates the multi channel
 - [] add login counter? i.e. after 3 attempts, ban user from trying again for x amount of time 
 - [ ] handle home page route by calling function to get a user's allowed channels and passing it to front end via express 
 - [ ] handle updating token and user object (changing member ID, phone number, or allowed channels) by calling update token route and reloading the page with the relevant new information 
-- [ ] write route to handle inbound sms by using channel phone number lookup function to find the correct channel ID associated with the number that received the message and the correct user whose phone number in the user object matches the from number 
+- [X] write route to handle inbound sms by using channel phone number lookup function to find the correct channel ID associated with the number that received the message and the correct user whose phone number in the user object matches the from number 
 - [ ] write a route to handle receiving form data and using it with the create new channel function to add a new channel (maybe optional parameter to specify users who should be added like slack has it?)
 - [ ] write a route to handle adding user, removing users, and show all users 
 

@@ -234,6 +234,36 @@ function validateLogin(submittedTn, submittedPass){
     }
 }
 
+// Create function to find who sent in the text and where the text is meant to go
+function smsToChannelName(smsToNumber, smsFromNumber, smsBody) {
+    // Use smsFromNumber to determine who sent the message
+    let user = lookupUser(smsFromNumber)
+    // check if user exists
+    if (user == false) {
+        console.log('This number is not associated with a channel')
+        return false
+    }
+
+// Use smsToNumber to find the associated channel inside of channel.json
+// read in channel.json
+    let ChannelObject = JSON.parse(fs.readFileSync(pathToChannels, 'utf-8'));
+    const channel = Object.values(ChannelObject).map(value => {
+        let Chan_Name = value['channelID']
+        let Channel_Phone_number = value['phoneNumber']
+        return [Chan_Name, Channel_Phone_number]
+    });
+    for (let i = 0; i < channel.length; i++) {
+        let channel_number = channel[i][1];
+        let channel_name = channel[i][0];
+
+        // if phone number match is found, return channel_name
+        if (channel_number === smsToNumber) {
+            console.log( user + " sent the message:  " + smsBody + "  from the number " + smsFromNumber + " ,to the number " +  smsToNumber+ " ,which is tied to the channel: " + channel_name)
+            return [user,smsBody, channel_name]
+        }
+    }
+}
+
 // sign up or sign in page
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, 'views/index.html'))
@@ -253,8 +283,7 @@ app.post("/sign_up", async (req, res) => {
     addUser(member_id, token, phone_number, password, ['Welcome to SignalWire'])
 
     // add user to the default channel
-    channelsUpdate(['Welcome to SignalWire'],member_id)
-
+    chAdduser('Welcome to Signalwire',member_id)
     // after user registration, redirect to 'home' view which should show current channels in a sidebar and user modification options
 });
 
@@ -310,6 +339,15 @@ app.post("/chCreateChannel",async(req,es)=>{
     const channelID = req.body['channelID'];
     console.log(chCreateChannel(channelID,memberID));
 });
+
+// Create a route for incoming messages
+app.post("/incoming_message", (req,res) => {
+    let smsToNumber = req.body.To
+    let smsFromNumber= req.body.From
+    let smsBody = req.body.Body
+    // Use smsToChannelName to log where the text should be sent in our application
+    console.log(smsToChannelName(smsToNumber,smsFromNumber,smsBody))
+})
 
 
 async function start(port) {
