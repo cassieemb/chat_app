@@ -5,6 +5,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const request = require('request');
+const { channel } = require("diagnostics_channel");
 
 // authentication variables from .env file
 const spaceDomain = process.env.SPACE_URL;
@@ -165,7 +166,7 @@ function createToken(memberID){
     const options = {
         method: 'POST',
         url: 'https://' + spaceDomain + '/api/chat/tokens',
-        headers: {Accept: 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Basic ' + new Buffer(username + ':' + password).toString('base64')},
+        headers: {Accept: 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Basic ' + new Buffer.from(username + ':' + password).toString('base64')},
         body: {
             channels: {'Welcome to SignalWire': {read: true, write: true}},
             ttl: 43200,
@@ -180,6 +181,68 @@ function createToken(memberID){
     });
     return token
 }
+
+// Update chat token function
+function updateToken(memberID){
+    let jsonData = fs.readFileSync(pathToUsers, 'utf-8');
+
+    fs.writeFileSync(pathToBackupUsers,jsonData);
+    let user = JSON.parse(jsonData);
+
+    if (user.hasOwnProperty(memberID))
+    {
+       let channels = user[memberID].approvedChannels;
+       let channelPerms = {}
+       for (const channel in channels){
+            channelPerms[channel]={read:true,write:true}
+       }
+       const options = {
+        method: 'POST',
+        url: 'https://' + spaceDomain + '/api/chat/tokens',
+        headers: {Accept: 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Basic ' + new Buffer.from(username + ':' + password).toString('base64')},
+        body: {
+            channels: channelPerms,
+            ttl: 43200,
+            member_id: memberID},
+        json: true
+    };
+    request(options, function (error, response, body) {
+        if (error) throw new Error(error);
+        token = body['token']
+        user[memberID].chatToken = token;
+
+        fs.writeFileSync(pathToUsers,JSON.stringify(user));
+    });
+    return "Updated Chat Token";
+    }
+    else{
+        return "Invalid Member ID";
+    }    
+}
+
+// Update User Object
+function updateUserChannels(memberID,channelID)
+{
+    let userData = fs.readFileSync(pathToUsers, 'utf-8');
+    let channelData = fs.readFileSync(pathToChannels, 'utf-8');
+
+    fs.writeFileSync(pathToBackupUsers,jsonData);
+    let user = JSON.parse(userData);
+    let channels = JSON.parse(channelData);
+
+
+    if (user.hasOwnProperty(memberID) && channels.hasOwnProperty(channelID)){
+        if (!user[memberID.approvedChannels].includes(channelID)){
+        user[memberID.approvedChannels].push(channelID)
+        fs.writeFileSync(pathToUsers,JSON.stringify(user));
+        return "Channel added to User Object";
+    }
+    return "Channel already in User Object"
+    }
+    return "Invalid Param"
+}
+
+
 
 // use phone number to lookup user ID from phone number
 function lookupUser(submittedTN){
@@ -317,24 +380,24 @@ app.post( "/sign_in", async(req, res) =>{
 
 
 // routes to expose the ability to modify channels.json
-app.post("/chAddUser",async(req,es)=>{
+app.post("/chAddUser",async(req,res)=>{
     const memberID = req.body['memberID'];
     const channelID = req.body['channelID'];
     console.log(chAddUser(channelID,memberID));
 });
 
-app.post("/chPopUser",async(req,es)=>{
+app.post("/chPopUser",async(req,res)=>{
     const memberID = req.body['memberID'];
     const channelID = req.body['channelID'];
     console.log(chPopUser(channelID,memberID));
 });
 
-app.post("/chListUsers",async(req,es)=>{
+app.post("/chListUsers",async(req,res)=>{
     const channelID = req.body['channelID'];
     console.log(chListUsers(channelID));
 });
 
-app.post("/chCreateChannel",async(req,es)=>{
+app.post("/chCreateChannel",async(req,res)=>{
     const memberID = req.body['memberID'];
     const channelID = req.body['channelID'];
     console.log(chCreateChannel(channelID,memberID));
@@ -348,6 +411,12 @@ app.post("/incoming_message", (req,res) => {
     // Use smsToChannelName to log where the text should be sent in our application
     console.log(smsToChannelName(smsToNumber,smsFromNumber,smsBody))
 })
+
+// Update token route
+app.post("/update_token",async(req,res)=>{
+    const memberID = req.body['memberID'];
+    console.log(updateToken(memberID))
+});
 
 
 async function start(port) {

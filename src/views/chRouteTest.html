@@ -13,14 +13,14 @@
     <form>
         <div class="form-row">
             <label class="form-row-inner">
-                <input type="text" name="memberID" id="memberID" class="input-text" required>
+                <input type="text" name="memberID" id="memberID" class="input-text">
                 <span class="label">Member ID</span>
                   <span class="border"></span>
             </label>
         </div>
             <div class="form-row">
                 <label class="form-row-inner">
-                    <input type="text" name="channelID" id="channelID" class="channelID" required>
+                    <input type="text" name="channelID" id="channelID" class="channelID">
                     <span class="label">Channel ID</span>
                     <span class="border"></span>
                 </label>
@@ -30,6 +30,8 @@
                 <input formaction="/chPopUser" formmethod="post" type="submit" name="PopUser" class="PopUser" value="Remove User">
                 <input formaction="/chCreateChannel" formmethod="post" type="submit" name="CreateChannel" class="CreateChannel" value="Create New Channel">
                 <input formaction="/chListUsers" formmethod="post" type="submit" name="ListUsers" class="ListUsers" value="List Users">
+                <input formaction="/update_token" formmethod="post" type="submit" name="UpdateToken" class="UpdateToken" value="Update Token">
+
             </div>
         </div>
     </form>
