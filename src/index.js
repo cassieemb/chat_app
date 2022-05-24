@@ -47,11 +47,7 @@ function addUser(memberID, chatToken, phoneNumber, password, approvedChannels){
     userObject[newUser.memberID] = newUser
 
     // Writing to our JSON file
-    fs.writeFile(pathToUsers, JSON.stringify(userObject), (err) => {
-        if (err)
-            console.log(err);
-        console.log(memberID + " added");
-    });
+    fs.writeFileSync(pathToUsers,JSON.stringify(userObject));
 }
 
 // Returns a list of memberIDs associated with channelID
@@ -98,7 +94,6 @@ function chAddUser(channelID,memberID)
     }
     
 }
-
 
 // Removes user from channelID.members by memberID
 function chPopUser(channelID,memberID)
@@ -165,9 +160,9 @@ function createToken(memberID){
     const options = {
         method: 'POST',
         url: 'https://' + spaceDomain + '/api/chat/tokens',
-        headers: {Accept: 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Basic ' + new Buffer(username + ':' + password).toString('base64')},
+        headers: {Accept: 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Basic ' + new Buffer.from(username + ':' + password).toString('base64')},
         body: {
-            channels: {'Welcome to SignalWire': {read: true, write: true}},
+            channels: {'Welcome': {read: true, write: true}},
             ttl: 43200,
             member_id: memberID},
         json: true
@@ -180,6 +175,92 @@ function createToken(memberID){
     });
     return token
 }
+
+// Update chat token function
+function updateToken(memberID){
+    let jsonData = fs.readFileSync(pathToUsers, 'utf-8');
+
+    fs.writeFileSync(pathToBackupUsers,jsonData);
+    let user = JSON.parse(jsonData);
+
+    if (user.hasOwnProperty(memberID))
+    {
+       let channels = user[memberID].approvedChannels;
+       let channelPerms = {}
+       for (const channel in channels){
+            channelPerms[channel]={read:true,write:true}
+       }
+       const options = {
+        method: 'POST',
+        url: 'https://' + spaceDomain + '/api/chat/tokens',
+        headers: {Accept: 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Basic ' + new Buffer.from(username + ':' + password).toString('base64')},
+        body: {
+            channels: channelPerms,
+            ttl: 43200,
+            member_id: memberID},
+        json: true
+    };
+    request(options, function (error, response, body) {
+        if (error) throw new Error(error);
+        token = body['token']
+        user[memberID].chatToken = token;
+
+        fs.writeFileSync(pathToUsers,JSON.stringify(user));
+    });
+    return "Updated Chat Token";
+    }
+    else{
+        return "Invalid Member ID";
+    }    
+}
+
+// Update User Object
+function userAddChannels(channelID,memberID)
+{
+    let userData = fs.readFileSync(pathToUsers, 'utf-8');
+    let channelData = fs.readFileSync(pathToChannels, 'utf-8');
+
+    fs.writeFileSync(pathToBackupUsers,userData);
+    let user = JSON.parse(userData);
+    let channels = JSON.parse(channelData);
+
+
+    if (user.hasOwnProperty(memberID) && channels.hasOwnProperty(channelID)){
+        if (!user[memberID].approvedChannels.includes(channelID)){
+        user[memberID].approvedChannels.push(channelID)
+        fs.writeFileSync(pathToUsers,JSON.stringify(user));
+        return "Channel added to User Object";
+    }
+    return "Channel already in User Object"
+    }
+    return "Invalid Param"
+}
+
+// Remove channel from user object
+function userPopChannel(channelID,memberID)
+{
+    const userData = fs.readFileSync(pathToUsers,"utf8")
+
+    // Creates a backup instance to /backups/chBackup.json
+    fs.writeFileSync(pathToBackupUsers,userData);
+    let user = JSON.parse(userData)
+
+    // make sure channelID is valid channel, memberID is in members array, retrieve and splice memberID by index
+    if (user.hasOwnProperty(memberID) && user[memberID].approvedChannels.includes(channelID))
+    {
+        const chIndex = user[memberID].approvedChannels.indexOf(channelID);
+                if (chIndex > -1){
+                    user[memberID].approvedChannels.splice(chIndex,1)
+                }
+                fs.writeFileSync(pathToUsers,JSON.stringify(user))
+                return "Channel Removed";
+    }
+    else{
+        return "Invalid member or channel ID"
+    }
+}
+
+
 
 // use phone number to lookup user ID from phone number
 function lookupUser(submittedTN){
@@ -280,10 +361,10 @@ app.post("/sign_up", async (req, res) => {
     const token = createToken(member_id)
 
     // create user object using default channel
-    addUser(member_id, token, phone_number, password, ['Welcome to SignalWire'])
+    addUser(member_id, token, phone_number, password, ['Welcome'])
 
     // add user to the default channel
-    chAdduser('Welcome to Signalwire',member_id)
+     console.log(chAddUser('Welcome',member_id))
     // after user registration, redirect to 'home' view which should show current channels in a sidebar and user modification options
 });
 
@@ -317,27 +398,30 @@ app.post( "/sign_in", async(req, res) =>{
 
 
 // routes to expose the ability to modify channels.json
-app.post("/chAddUser",async(req,es)=>{
+app.post("/chAddUser",async(req,res)=>{
     const memberID = req.body['memberID'];
     const channelID = req.body['channelID'];
     console.log(chAddUser(channelID,memberID));
+    console.log(userAddChannels(channelID,memberID));
 });
 
-app.post("/chPopUser",async(req,es)=>{
+app.post("/chPopUser",async(req,res)=>{
     const memberID = req.body['memberID'];
     const channelID = req.body['channelID'];
     console.log(chPopUser(channelID,memberID));
+    console.log(userPopChannel(channelID,memberID));
 });
 
-app.post("/chListUsers",async(req,es)=>{
+app.post("/chListUsers",async(req,res)=>{
     const channelID = req.body['channelID'];
     console.log(chListUsers(channelID));
 });
 
-app.post("/chCreateChannel",async(req,es)=>{
+app.post("/chCreateChannel",async(req,res)=>{
     const memberID = req.body['memberID'];
     const channelID = req.body['channelID'];
     console.log(chCreateChannel(channelID,memberID));
+    console.log(userAddChannels(channelID,memberID));
 });
 
 // Create a route for incoming messages
@@ -348,6 +432,12 @@ app.post("/incoming_message", (req,res) => {
     // Use smsToChannelName to log where the text should be sent in our application
     console.log(smsToChannelName(smsToNumber,smsFromNumber,smsBody))
 })
+
+// Update token route
+app.post("/update_token",async(req,res)=>{
+    const memberID = req.body['memberID'];
+    console.log(updateToken(memberID))
+});
 
 
 async function start(port) {
