@@ -207,6 +207,7 @@ function updateToken(memberID){
 
         fs.writeFileSync(pathToUsers,JSON.stringify(user));
     });
+    
     return "Updated Chat Token";
     }
     else{
