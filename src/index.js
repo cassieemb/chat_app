@@ -5,11 +5,14 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const request = require('request');
+const axios = require('axios');
 
 // authentication variables from .env file
 const spaceDomain = process.env.SPACE_URL;
 const username= process.env.PROJECT_ID;
 const password= process.env.API_KEY
+
+
 
 // path to data from .env file
 const pathToUsers = process.env.PATH_TO_USERS;
@@ -135,11 +138,11 @@ function chCreateChannel(channelID,memberID)
     // Creates a backup instance to /backups/chBackup.json
     fs.writeFileSync(pathToBackupChannels,jsonData);
     let channels = JSON.parse(jsonData)
-    
+
     // if channelID not present in channels, add channelID as a new entry with timestamp
     if (!channels.hasOwnProperty(channelID)){
         let today = new Date().toLocaleDateString()
-        channels[channelID] = 
+        channels[channelID] =
         {
               "members":[memberID],
               "phoneNumber":"",
@@ -154,27 +157,22 @@ function chCreateChannel(channelID,memberID)
 }
 
 // define function to create chat token
-function createToken(memberID){
-    let token = '';
+async function createToken(memberID){
 
     const options = {
         method: 'POST',
         url: 'https://' + spaceDomain + '/api/chat/tokens',
         headers: {Accept: 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Basic ' + new Buffer.from(username + ':' + password).toString('base64')},
-        body: {
-            channels: {'Welcome': {read: true, write: true}},
+        data: {
+            channels: {'Welcome to SignalWire': {read: true, write: true}},
             ttl: 43200,
             member_id: memberID},
         json: true
     };
-
-    request(options, function (error, response, body) {
-        if (error) throw new Error(error);
-        console.log(body);
-        token = body['token']
-    });
-    return token
+    const response = await axios(options)
+    return response.data.token
 }
+
 
 // Update chat token function
 function updateToken(memberID){
@@ -320,7 +318,7 @@ function smsToChannelName(smsToNumber, smsFromNumber, smsBody) {
     // Use smsFromNumber to determine who sent the message
     let user = lookupUser(smsFromNumber)
     // check if user exists
-    if (user == false) {
+    if (user === false) {
         console.log('This number is not associated with a channel')
         return false
     }
@@ -354,11 +352,10 @@ app.get("/", (req, res) => {
 app.post("/sign_up", async (req, res) => {
 
     // receive form values
-    console.log(req.body);
     const { member_id, phone_number, password } = req.body;
 
     // create chat token
-    const token = createToken(member_id)
+    const token = await createToken(member_id)
 
     // create user object using default channel
     addUser(member_id, token, phone_number, password, ['Welcome'])
