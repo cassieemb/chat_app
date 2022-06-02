@@ -12,6 +12,8 @@ const spaceDomain = process.env.SPACE_URL;
 const username= process.env.PROJECT_ID;
 const password= process.env.API_KEY
 
+
+
 // path to data from .env file
 const pathToUsers = process.env.PATH_TO_USERS;
 const pathToChannels = process.env.PATH_TO_CHANNELS;
@@ -168,13 +170,14 @@ async function createToken(memberID){
         json: true
     };
     const response = await axios(options)
-    console.log(response.status)
+    
     if (response.status !== 200) {
         return false
     }
     else {
         return response.data.token
     }
+
 }
 
 
