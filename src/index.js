@@ -170,7 +170,14 @@ async function createToken(memberID){
         json: true
     };
     const response = await axios(options)
-    return response.data.token
+    
+    if (response.status !== 200) {
+        return false
+    }
+    else {
+        return response.data.token
+    }
+
 }
 
 
@@ -258,9 +265,33 @@ function userPopChannel(channelID,memberID)
     }
 }
 
+// use phone number to lookup allowed channels
+function lookupAllowedChannels(submittedTN){
+    // read users.json into users
+    let userObject = JSON.parse(fs.readFileSync(pathToUsers, 'utf-8'));
+    const users = Object.values(userObject).map(value => {
+        let memberID = value['memberID']
+        let memberPass = value['password']
+        let phoneNumber= value['phoneNumber']
+        let approvedChannels = value['approvedChannels']
+        return [memberID, memberPass, phoneNumber, approvedChannels]
+    });
 
+    // loop through users array to find a user with matching phone number
+    for (let i = 0; i < users.length; i++) {
+        let userNumber = users[i][2];
+        let userChannels = users[i][3];
+        let userID = users[i][0]
 
-// use phone number to lookup user ID from phone number
+        // if phone number match is found, return user ID
+        if (userNumber === '' + submittedTN) {
+            return [userID, userChannels]
+        }
+    }
+    return false
+}
+
+// use phone number to lookup user ID and return false if none is found
 function lookupUser(submittedTN){
     // read users.json into users
     let userObject = JSON.parse(fs.readFileSync(pathToUsers, 'utf-8'));
@@ -350,21 +381,43 @@ app.get("/", (req, res) => {
 
 // sign up as new user
 app.post("/sign_up", async (req, res) => {
-
     // receive form values
     const { member_id, phone_number, password } = req.body;
 
+    // check if phone_number already exists and flash error on page
+    let attemptResult = lookupUser(phone_number)
+
+    if (attemptResult !== false) {
+        return res.render(path.join(__dirname, 'views/index.html'),
+            {setClass: 'activate',
+                errM: 'User already exists with that phone number',
+                fail: false},
+        );
+    }
+
     // create chat token
     const token = await createToken(member_id)
+
+    // check if token creation was successful and flash error if chat token fails
+    if (token === false) {
+        // redirect back to sign in page and flash error message
+        res.render(path.join(__dirname, 'views/index.html'),
+        {setClass: 'activate',
+            errM: '422 Error: Token Failed to Create. Try again!',
+            fail: false},
+        );
+    }
 
     // create user object using default channel
     addUser(member_id, token, phone_number, password, ['Welcome'])
 
     // add user to the default channel
-     console.log(chAddUser('Welcome',member_id))
-    // after user registration, redirect to 'home' view which should show current channels in a sidebar and user modification options
-});
+    chAddUser('Welcome',member_id)
 
+    // after user registration, redirect to 'home' page with phone number as query param
+    res.redirect( "/home" + phone_number);
+
+});
 
 // sign in should validate password and user ID and if correct, redirect to 'home' view
 app.post( "/sign_in", async(req, res) =>{
@@ -376,9 +429,9 @@ app.post( "/sign_in", async(req, res) =>{
     let attemptResult = validateLogin(phone_number_attempt, password_attempt)
     console.log(attemptResult)
 
-    // redirect to home page if validation is successful, need to maybe pass userID also?
+    // redirect to home page if validation is successful
     if (attemptResult === 'Login Validated') {
-        // res.sendFile(path.join(__dirname, 'views/home.html'))
+        res.redirect( "/home" + phone_number_attempt);
     }
 
     // reset sign in page if validation fails
@@ -393,6 +446,22 @@ app.post( "/sign_in", async(req, res) =>{
 
 });
 
+// redirect to home page
+app.get("/home:phone_number", async(req, res)=>{
+    // look up user ID and return allowed channels
+    let miniMem = lookupAllowedChannels(req.params.phone_number);
+    const userID = miniMem[0];
+    const allowedChannels = miniMem[1];
+
+    console.log(userID)
+    console.log(allowedChannels)
+
+    // feed channels into sidenav so each can be clicked to show a 'chat', maybe add username in top corner?
+
+    // pass whatever channel is first in allowed channels as the 'current' channel
+
+
+})
 
 // routes to expose the ability to modify channels.json
 app.post("/chAddUser",async(req,res)=>{
